@@ -1,0 +1,98 @@
+%% End-to-end architecture: customer → GLB → MCI → two GKE clusters → apps → observability.
+flowchart LR
+    subgraph Internet
+      User([Customer])
+    end
+
+    User -->|HTTPS www.yourapp.com| DNS[Cloud DNS]
+    DNS --> GLB[Global External HTTPS LB<br/>Cloud Armor WAF]
+    GLB --> MCI{Multi-Cluster Ingress<br/>routing}
+
+    subgraph Region1[us-central1 — Primary]
+      direction TB
+      Sub1[gke-primary-subnet<br/>10.10.0.0/20]
+      subgraph GKE1[gke-primary]
+        ING1[Ingress NEGs]
+        SvcA1[Service web-app-a]
+        SvcB1[Service web-app-b]
+        subgraph PodsA1[web-app-a pods × N]
+          A1a[(pod)]
+          A1b[(pod)]
+          A1c[(pod)]
+        end
+        subgraph PodsB1[web-app-b pods × N]
+          B1a[(pod)]
+          B1b[(pod)]
+          B1c[(pod)]
+        end
+        ING1 --> SvcA1 --> PodsA1
+        ING1 --> SvcB1 --> PodsB1
+      end
+    end
+
+    subgraph Region2[us-east1 — Secondary]
+      direction TB
+      Sub2[gke-secondary-subnet<br/>10.50.0.0/20]
+      subgraph GKE2[gke-secondary]
+        ING2[Ingress NEGs]
+        SvcA2[Service web-app-a]
+        SvcB2[Service web-app-b]
+        subgraph PodsA2[web-app-a pods × N]
+          A2a[(pod)]
+          A2b[(pod)]
+          A2c[(pod)]
+        end
+        subgraph PodsB2[web-app-b pods × N]
+          B2a[(pod)]
+          B2b[(pod)]
+          B2c[(pod)]
+        end
+        ING2 --> SvcA2 --> PodsA2
+        ING2 --> SvcB2 --> PodsB2
+      end
+    end
+
+    MCI -->|proximity / failover| ING1
+    MCI -->|proximity / failover| ING2
+
+    subgraph DataPlatform[Managed services]
+      AR[Artifact Registry]
+      SM[Secret Manager]
+      SQL[(Cloud SQL HA)]
+      MEM[(Memorystore Redis)]
+      PUB[Pub/Sub]
+    end
+
+    PodsB1 --> MEM
+    PodsB2 --> MEM
+    PodsB1 --> PUB
+    PodsB2 --> PUB
+    PodsA1 --> SQL
+    PodsA2 --> SQL
+
+    subgraph Observability
+      CL[Cloud Logging]
+      CM[Cloud Monitoring + Managed Prometheus]
+      CT[Cloud Trace]
+      ER[Error Reporting]
+      BQ[(BigQuery platform_logs)]
+      GR[Grafana<br/>4 panels]
+    end
+
+    GKE1 -.logs.-> CL
+    GKE2 -.logs.-> CL
+    GKE1 -.metrics.-> CM
+    GKE2 -.metrics.-> CM
+    GKE1 -.traces.-> CT
+    GKE2 -.traces.-> CT
+    CL --> BQ
+    BQ --> GR
+    CM --> GR
+
+    subgraph CICD[CI/CD]
+      GH[GitHub Actions / Cloud Build]
+      WIF[Workload Identity Federation]
+    end
+    GH --> WIF --> AR
+    GH --> GKE1
+    GH --> GKE2

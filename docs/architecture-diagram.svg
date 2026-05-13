@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1050" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <style>
+      .bg       { fill: #f7f9fc; }
+      .lane     { fill: #ffffff; stroke: #d0d7e2; stroke-width: 1.2; rx: 14; ry: 14; }
+      .laneTitle{ font-size: 14px; font-weight: 600; fill: #1f2937; }
+      .gcp      { fill: #e8f0fe; stroke: #4285f4; stroke-width: 1.4; rx: 12; ry: 12; }
+      .gcpTxt   { font-size: 13px; fill: #1a73e8; font-weight: 600; }
+      .gke      { fill: #ecfdf3; stroke: #34a853; stroke-width: 1.4; rx: 12; ry: 12; }
+      .gkeTxt   { font-size: 13px; fill: #137333; font-weight: 600; }
+      .obs      { fill: #fef7e0; stroke: #f9ab00; stroke-width: 1.4; rx: 10; ry: 10; }
+      .obsTxt   { font-size: 12px; fill: #b06000; font-weight: 600; }
+      .sec      { fill: #fce8e6; stroke: #ea4335; stroke-width: 1.4; rx: 10; ry: 10; }
+      .secTxt   { font-size: 12px; fill: #b3261e; font-weight: 600; }
+      .pod      { fill: #ffffff; stroke: #34a853; stroke-width: 1; rx: 6; ry: 6; }
+      .podTxt   { font-size: 11px; fill: #137333; font-weight: 500; }
+      .arrow    { fill: none; stroke: #5f6368; stroke-width: 1.6; marker-end: url(#arrow); }
+      .arrowB   { fill: none; stroke: #1a73e8; stroke-width: 2; marker-end: url(#arrowB); }
+      .arrowO   { fill: none; stroke: #f9ab00; stroke-width: 1.4; stroke-dasharray: 5 3; marker-end: url(#arrowO); }
+      .label    { font-size: 11px; fill: #5f6368; }
+      .title    { font-size: 22px; font-weight: 700; fill: #202124; }
+      .subtitle { font-size: 13px; fill: #5f6368; }
+      .small    { font-size: 10px; fill: #5f6368; }
+      .pill     { font-size: 11px; fill: #1f2937; }
+    </style>
+    <marker id="arrow"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5f6368"/></marker>
+    <marker id="arrowB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1a73e8"/></marker>
+    <marker id="arrowO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f9ab00"/></marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1500" height="1050"/>
+
+  <!-- Title -->
+  <text class="title"    x="30" y="40">GCP Platform — 2 GKE clusters, 2 web apps, multi-cluster ingress, full observability</text>
+  <text class="subtitle" x="30" y="62">Customer traffic flows top → bottom; observability pipeline shown in amber on the right.</text>
+
+  <!-- ============ Customer + DNS lane ============ -->
+  <rect class="lane" x="30" y="85" width="1440" height="80"/>
+  <text class="laneTitle" x="50" y="108">Customer edge</text>
+
+  <rect class="gcp" x="60"  y="118" width="160" height="40"/>
+  <text class="gcpTxt"  x="76"  y="143">Customer (HTTPS)</text>
+
+  <rect class="gcp" x="260" y="118" width="160" height="40"/>
+  <text class="gcpTxt"  x="280" y="143">Cloud DNS</text>
+
+  <rect class="gcp" x="460" y="118" width="240" height="40"/>
+  <text class="gcpTxt" x="478" y="143">Global External HTTPS LB</text>
+
+  <rect class="sec" x="720" y="118" width="170" height="40"/>
+  <text class="secTxt" x="740" y="143">Cloud Armor WAF</text>
+
+  <rect class="gcp" x="910" y="118" width="220" height="40"/>
+  <text class="gcpTxt" x="928" y="143">Multi-Cluster Ingress</text>
+
+  <rect class="gcp" x="1150" y="118" width="160" height="40"/>
+  <text class="gcpTxt" x="1166" y="143">Managed SSL cert</text>
+
+  <path class="arrowB" d="M 220 138 L 258 138"/>
+  <path class="arrowB" d="M 420 138 L 458 138"/>
+  <path class="arrowB" d="M 700 138 L 718 138"/>
+  <path class="arrowB" d="M 890 138 L 908 138"/>
+
+  <!-- ============ GCP Project lane ============ -->
+  <rect class="lane" x="30" y="185" width="1440" height="640"/>
+  <text class="laneTitle" x="50" y="208">GCP Project (Folder → Project, IAM: Dev / Ops / SRE / CI-CD)</text>
+
+  <!-- VPC banner -->
+  <rect class="gcp" x="60" y="220" width="1380" height="42"/>
+  <text class="gcpTxt" x="80" y="247">VPC (platform-vpc) — VPC-native, Cloud NAT, Private Service Access, firewall, IAP SSH</text>
+
+  <!-- ===== Region 1 ===== -->
+  <rect class="gke" x="60" y="280" width="660" height="520"/>
+  <text class="gkeTxt" x="80" y="305">Region: us-central1  (Primary)</text>
+  <text class="small"  x="80" y="320">gke-primary-subnet 10.10.0.0/20 · pods 10.20.0.0/14 · svc 10.40.0.0/20</text>
+
+  <!-- GKE cluster 1 -->
+  <rect class="gcp" x="80" y="340" width="620" height="440"/>
+  <text class="gcpTxt" x="100" y="362">gke-primary (private, VPC-native, Workload Identity, Managed Prometheus)</text>
+
+  <!-- system + apps pool labels -->
+  <rect x="100" y="378" width="180" height="22" rx="6" ry="6" fill="#fff" stroke="#137333"/>
+  <text class="podTxt" x="115" y="394">node pool: system</text>
+  <rect x="290" y="378" width="200" height="22" rx="6" ry="6" fill="#fff" stroke="#137333"/>
+  <text class="podTxt" x="305" y="394">node pool: apps (HPA, autoscale)</text>
+
+  <!-- web-app-a -->
+  <rect class="gke" x="100" y="412" width="280" height="170"/>
+  <text class="gkeTxt" x="120" y="434">ns: web-app-a</text>
+  <text class="small"  x="120" y="448">Deployment + HPA + PDB + NEG</text>
+  <rect class="pod" x="120" y="460" width="100" height="36"/><text class="podTxt" x="142" y="483">pod</text>
+  <rect class="pod" x="230" y="460" width="100" height="36"/><text class="podTxt" x="252" y="483">pod</text>
+  <rect class="pod" x="120" y="508" width="100" height="36"/><text class="podTxt" x="142" y="531">pod</text>
+  <rect class="pod" x="230" y="508" width="100" height="36"/><text class="podTxt" x="252" y="531">pod</text>
+
+  <!-- web-app-b -->
+  <rect class="gke" x="400" y="412" width="280" height="170"/>
+  <text class="gkeTxt" x="420" y="434">ns: web-app-b</text>
+  <text class="small"  x="420" y="448">Deployment + HPA + PDB + NEG</text>
+  <rect class="pod" x="420" y="460" width="100" height="36"/><text class="podTxt" x="442" y="483">pod</text>
+  <rect class="pod" x="530" y="460" width="100" height="36"/><text class="podTxt" x="552" y="483">pod</text>
+  <rect class="pod" x="420" y="508" width="100" height="36"/><text class="podTxt" x="442" y="531">pod</text>
+  <rect class="pod" x="530" y="508" width="100" height="36"/><text class="podTxt" x="552" y="531">pod</text>
+
+  <!-- Cluster ingress + downstreams -->
+  <rect class="gcp" x="100" y="600" width="580" height="40"/>
+  <text class="gcpTxt" x="120" y="625">GKE Ingress → ClusterIP (NEG-backed) → pods</text>
+
+  <rect class="gcp" x="100" y="655" width="180" height="38"/><text class="gcpTxt" x="118" y="678">Cloud SQL (HA)</text>
+  <rect class="gcp" x="295" y="655" width="180" height="38"/><text class="gcpTxt" x="315" y="678">Memorystore Redis</text>
+  <rect class="gcp" x="490" y="655" width="180" height="38"/><text class="gcpTxt" x="520" y="678">Pub/Sub</text>
+  <rect class="gcp" x="100" y="710" width="290" height="38"/><text class="gcpTxt" x="118" y="733">Artifact Registry (regional pull)</text>
+  <rect class="gcp" x="405" y="710" width="265" height="38"/><text class="gcpTxt" x="423" y="733">Secret Manager · KMS</text>
+
+  <!-- ===== Region 2 ===== -->
+  <rect class="gke" x="740" y="280" width="700" height="520"/>
+  <text class="gkeTxt" x="760" y="305">Region: us-east1  (Secondary / DR)</text>
+  <text class="small"  x="760" y="320">gke-secondary-subnet 10.50.0.0/20 · pods 10.60.0.0/14 · svc 10.80.0.0/20</text>
+
+  <rect class="gcp" x="760" y="340" width="660" height="440"/>
+  <text class="gcpTxt" x="780" y="362">gke-secondary (private, VPC-native, Workload Identity, Managed Prometheus)</text>
+
+  <rect x="780" y="378" width="180" height="22" rx="6" ry="6" fill="#fff" stroke="#137333"/>
+  <text class="podTxt" x="795" y="394">node pool: system</text>
+  <rect x="970" y="378" width="200" height="22" rx="6" ry="6" fill="#fff" stroke="#137333"/>
+  <text class="podTxt" x="985" y="394">node pool: apps (HPA, autoscale)</text>
+
+  <rect class="gke" x="780" y="412" width="300" height="170"/>
+  <text class="gkeTxt" x="800" y="434">ns: web-app-a</text>
+  <rect class="pod" x="800" y="460" width="110" height="36"/><text class="podTxt" x="828" y="483">pod</text>
+  <rect class="pod" x="920" y="460" width="110" height="36"/><text class="podTxt" x="948" y="483">pod</text>
+  <rect class="pod" x="800" y="508" width="110" height="36"/><text class="podTxt" x="828" y="531">pod</text>
+  <rect class="pod" x="920" y="508" width="110" height="36"/><text class="podTxt" x="948" y="531">pod</text>
+
+  <rect class="gke" x="1100" y="412" width="300" height="170"/>
+  <text class="gkeTxt" x="1120" y="434">ns: web-app-b</text>
+  <rect class="pod" x="1120" y="460" width="110" height="36"/><text class="podTxt" x="1148" y="483">pod</text>
+  <rect class="pod" x="1240" y="460" width="110" height="36"/><text class="podTxt" x="1268" y="483">pod</text>
+  <rect class="pod" x="1120" y="508" width="110" height="36"/><text class="podTxt" x="1148" y="531">pod</text>
+  <rect class="pod" x="1240" y="508" width="110" height="36"/><text class="podTxt" x="1268" y="531">pod</text>
+
+  <rect class="gcp" x="780" y="600" width="620" height="40"/>
+  <text class="gcpTxt" x="800" y="625">GKE Ingress → ClusterIP (NEG-backed) → pods</text>
+
+  <rect class="gcp" x="780" y="655" width="190" height="38"/><text class="gcpTxt" x="798" y="678">Cloud SQL (replica)</text>
+  <rect class="gcp" x="985" y="655" width="200" height="38"/><text class="gcpTxt" x="1005" y="678">Memorystore Redis</text>
+  <rect class="gcp" x="1200" y="655" width="190" height="38"/><text class="gcpTxt" x="1220" y="678">Pub/Sub</text>
+  <rect class="gcp" x="780" y="710" width="300" height="38"/><text class="gcpTxt" x="798" y="733">Artifact Registry (regional pull)</text>
+  <rect class="gcp" x="1095" y="710" width="295" height="38"/><text class="gcpTxt" x="1113" y="733">Secret Manager · KMS</text>
+
+  <!-- MCI traffic arrows from MCI to both clusters -->
+  <path class="arrowB" d="M 1020 158 C 800 220, 500 240, 380 340"/>
+  <path class="arrowB" d="M 1020 158 C 1200 220, 1300 240, 1100 340"/>
+
+  <!-- ============ Observability lane ============ -->
+  <rect class="lane" x="30" y="850" width="1440" height="170"/>
+  <text class="laneTitle" x="50" y="873">Observability  ·  Security  ·  CI/CD</text>
+
+  <!-- Observability boxes -->
+  <rect class="obs" x="60"  y="888" width="160" height="42"/><text class="obsTxt" x="78"  y="914">Cloud Logging</text>
+  <rect class="obs" x="230" y="888" width="190" height="42"/><text class="obsTxt" x="248" y="914">Managed Prometheus</text>
+  <rect class="obs" x="430" y="888" width="160" height="42"/><text class="obsTxt" x="448" y="914">Cloud Trace</text>
+  <rect class="obs" x="600" y="888" width="160" height="42"/><text class="obsTxt" x="618" y="914">Cloud Profiler</text>
+  <rect class="obs" x="770" y="888" width="170" height="42"/><text class="obsTxt" x="788" y="914">Error Reporting</text>
+  <rect class="obs" x="950" y="888" width="230" height="42"/><text class="obsTxt" x="968" y="914">BigQuery — platform_logs</text>
+  <rect class="obs" x="1190" y="888" width="240" height="42"/><text class="obsTxt" x="1208" y="914">Grafana (4-panel dashboard)</text>
+
+  <!-- Security + CI/CD chips -->
+  <rect class="sec" x="60"   y="950" width="200" height="36"/><text class="secTxt" x="78"   y="974">Workload Identity</text>
+  <rect class="sec" x="270"  y="950" width="200" height="36"/><text class="secTxt" x="288"  y="974">Binary Authorization</text>
+  <rect class="sec" x="480"  y="950" width="200" height="36"/><text class="secTxt" x="498"  y="974">VPC SC + private nodes</text>
+
+  <rect class="gcp" x="700"  y="950" width="240" height="36"/><text class="gcpTxt" x="718"  y="974">Artifact Registry + Trivy</text>
+  <rect class="gcp" x="950"  y="950" width="240" height="36"/><text class="gcpTxt" x="968"  y="974">Cloud Build / GitHub Actions</text>
+  <rect class="gcp" x="1200" y="950" width="230" height="36"/><text class="gcpTxt" x="1218" y="974">Terraform (envs/dev, prod)</text>
+
+  <!-- Telemetry arrows from clusters to observability -->
+  <path class="arrowO" d="M 380 780 C 380 830, 140 850, 140 888"/>
+  <path class="arrowO" d="M 660 780 C 660 830, 325 850, 325 888"/>
+  <path class="arrowO" d="M 1000 780 C 1000 830, 510 850, 510 888"/>
+  <path class="arrowO" d="M 1300 780 C 1300 830, 680 850, 680 888"/>
+  <path class="arrowO" d="M 220 930 L 950 910"/>
+  <path class="arrowO" d="M 1180 910 L 1190 910"/>
+
+  <!-- Legend -->
+  <rect x="1180" y="60" width="290" height="34" rx="8" ry="8" fill="#fff" stroke="#d0d7e2"/>
+  <circle cx="1198" cy="77" r="6" fill="#1a73e8"/><text class="small" x="1210" y="81">data path</text>
+  <circle cx="1278" cy="77" r="6" fill="#f9ab00"/><text class="small" x="1290" y="81">telemetry</text>
+  <circle cx="1368" cy="77" r="6" fill="#ea4335"/><text class="small" x="1380" y="81">security</text>
+</svg>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" font-family="Inter, system-ui, -apple-system, sans-serif">
+  <defs>
+    <!-- Background gradient: deep blue → lighter blue, GCP-flavored -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0b1d3a"/>
+      <stop offset="55%"  stop-color="#173e7c"/>
+      <stop offset="100%" stop-color="#1a73e8"/>
+    </linearGradient>
+    <!-- Soft glow for the cluster nodes -->
+    <radialGradient id="nodeGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"  stop-color="#34a853" stop-opacity="0.85"/>
+      <stop offset="80%" stop-color="#34a853" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="podGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"  stop-color="#fbbc05" stop-opacity="0.9"/>
+      <stop offset="80%" stop-color="#fbbc05" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Subtle grid pattern -->
+    <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+    </pattern>
+    <!-- Pulse animation for the “live” dot -->
+    <radialGradient id="livePulse">
+      <stop offset="0%"  stop-color="#34a853"/>
+      <stop offset="100%" stop-color="#34a853" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="320" fill="url(#bg)"/>
+  <rect width="1280" height="320" fill="url(#grid)"/>
+
+  <!-- Accent stripe along the bottom: the four GCP colors -->
+  <rect x="0" y="312" width="320" height="8" fill="#4285f4"/>
+  <rect x="320" y="312" width="320" height="8" fill="#ea4335"/>
+  <rect x="640" y="312" width="320" height="8" fill="#fbbc05"/>
+  <rect x="960" y="312" width="320" height="8" fill="#34a853"/>
+
+  <!-- ============ Right-side architecture diagram (decorative) ============ -->
+  <!-- Global LB diamond -->
+  <g transform="translate(960, 60)">
+    <polygon points="0,40 40,0 80,40 40,80"
+             fill="#1a73e8" stroke="#ffffff" stroke-width="2" opacity="0.95"/>
+    <text x="40" y="46" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">GLB</text>
+    <text x="40" y="105" text-anchor="middle" fill="#a8c7fa" font-size="11">Cloud Armor</text>
+  </g>
+
+  <!-- Connection lines from GLB to the two clusters -->
+  <g stroke="#a8c7fa" stroke-width="2" fill="none" opacity="0.8">
+    <path d="M 1000 100 C 950 140, 880 150, 850 175"/>
+    <path d="M 1000 100 C 1100 140, 1130 150, 1160 175"/>
+  </g>
+
+  <!-- Cluster 1 (primary) -->
+  <g transform="translate(780, 175)">
+    <circle cx="50" cy="50" r="60" fill="url(#nodeGlow)"/>
+    <rect x="10" y="10" width="80" height="80" rx="12" fill="#0d2e5e" stroke="#34a853" stroke-width="2"/>
+    <text x="50" y="32" text-anchor="middle" fill="#a8c7fa" font-size="10">us-central1</text>
+    <!-- pod dots -->
+    <circle cx="30" cy="55" r="6" fill="#fbbc05"/>
+    <circle cx="50" cy="55" r="6" fill="#fbbc05"/>
+    <circle cx="70" cy="55" r="6" fill="#fbbc05"/>
+    <circle cx="40" cy="75" r="6" fill="#34a853"/>
+    <circle cx="60" cy="75" r="6" fill="#34a853"/>
+    <text x="50" y="105" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="600">gke-primary</text>
+  </g>
+
+  <!-- Cluster 2 (secondary) -->
+  <g transform="translate(1110, 175)">
+    <circle cx="50" cy="50" r="60" fill="url(#nodeGlow)"/>
+    <rect x="10" y="10" width="80" height="80" rx="12" fill="#0d2e5e" stroke="#34a853" stroke-width="2"/>
+    <text x="50" y="32" text-anchor="middle" fill="#a8c7fa" font-size="10">us-east1</text>
+    <circle cx="30" cy="55" r="6" fill="#fbbc05"/>
+    <circle cx="50" cy="55" r="6" fill="#fbbc05"/>
+    <circle cx="70" cy="55" r="6" fill="#fbbc05"/>
+    <circle cx="40" cy="75" r="6" fill="#34a853"/>
+    <circle cx="60" cy="75" r="6" fill="#34a853"/>
+    <text x="50" y="105" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="600">gke-secondary</text>
+  </g>
+
+  <!-- Telemetry sparkline behind the title (decorative) -->
+  <g opacity="0.55" stroke="#fbbc05" stroke-width="2" fill="none">
+    <polyline points="50,235 90,225 130,250 170,220 210,240 250,210 290,230 330,205 370,235 410,215 450,240 490,220 530,250 570,230"/>
+  </g>
+  <g opacity="0.45" stroke="#34a853" stroke-width="2" fill="none">
+    <polyline points="50,265 90,255 130,275 170,250 210,265 250,245 290,260 330,238 370,265 410,250 450,272 490,255 530,278 570,260"/>
+  </g>
+
+  <!-- "Live" status dot, with subtle pulse -->
+  <g transform="translate(60, 60)">
+    <circle r="14" fill="url(#livePulse)"/>
+    <circle r="6"  fill="#34a853"/>
+  </g>
+  <text x="86" y="65" fill="#a8c7fa" font-size="13" letter-spacing="2">PRODUCTION-GRADE · GA</text>
+
+  <!-- ============ Title block ============ -->
+  <text x="50" y="135" fill="#ffffff" font-size="56" font-weight="800" letter-spacing="-1">GCP × SRE × O11y</text>
+  <text x="50" y="180" fill="#a8c7fa" font-size="22" font-weight="500">Multi-region GKE platform with Grafana-on-BigQuery observability</text>
+
+  <!-- Feature pills -->
+  <g transform="translate(50, 200)">
+    <g>
+      <rect width="142" height="30" rx="15" fill="#ffffff" fill-opacity="0.10" stroke="#a8c7fa" stroke-opacity="0.6"/>
+      <text x="14" y="20" fill="#ffffff" font-size="13" font-weight="600">2 GKE clusters</text>
+    </g>
+    <g transform="translate(152, 0)">
+      <rect width="180" height="30" rx="15" fill="#ffffff" fill-opacity="0.10" stroke="#a8c7fa" stroke-opacity="0.6"/>
+      <text x="14" y="20" fill="#ffffff" font-size="13" font-weight="600">Multi-Cluster Ingress</text>
+    </g>
+    <g transform="translate(342, 0)">
+      <rect width="160" height="30" rx="15" fill="#ffffff" fill-opacity="0.10" stroke="#a8c7fa" stroke-opacity="0.6"/>
+      <text x="14" y="20" fill="#ffffff" font-size="13" font-weight="600">Cloud Armor WAF</text>
+    </g>
+    <g transform="translate(512, 0)">
+      <rect width="200" height="30" rx="15" fill="#ffffff" fill-opacity="0.10" stroke="#a8c7fa" stroke-opacity="0.6"/>
+      <text x="14" y="20" fill="#ffffff" font-size="13" font-weight="600">BigQuery + Grafana</text>
+    </g>
+  </g>
+</svg>

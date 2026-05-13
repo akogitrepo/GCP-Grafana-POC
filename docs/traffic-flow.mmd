@@ -1,0 +1,27 @@
+%% Step-by-step traffic flow from a customer request to the response.
+sequenceDiagram
+    autonumber
+    participant U as Customer
+    participant D as Cloud DNS
+    participant L as Global HTTPS LB<br/>(Cloud Armor)
+    participant M as MultiClusterIngress<br/>controller
+    participant N as Cluster NEG<br/>(closest healthy)
+    participant K as Ingress / Service
+    participant P as Pod replica
+    participant O as Observability<br/>(Logs, Trace, Metrics)
+
+    U->>D: Resolve www.yourapp.com
+    D-->>U: A record (anycast global IP)
+    U->>L: TLS handshake + HTTPS request
+    L->>L: SSL terminate, WAF inspect
+    L->>M: Forward to backend service
+    M->>N: Pick proximity / health-checked NEG
+    N->>K: Container-native LB to ClusterIP svc
+    K->>P: Round-robin to a Ready pod
+    P->>P: Process request, emit structured logs + traces
+    P-->>K: Response
+    K-->>N: Response
+    N-->>L: Response
+    L-->>U: HTTPS response
+    P-->>O: stdout JSON, OTel traces, Prom metrics
+    L-->>O: LB request logs
