@@ -1,0 +1,90 @@
+{
+  "title": "Platform Overview (BigQuery)",
+  "uid": "platform-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["platform", "bigquery", "gke"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "PROJECT",
+        "type": "constant",
+        "current": { "text": "REPLACE_WITH_PROJECT_ID", "value": "REPLACE_WITH_PROJECT_ID" },
+        "hide": 2
+      },
+      {
+        "name": "DATASET",
+        "type": "constant",
+        "current": { "text": "platform_logs", "value": "platform_logs" },
+        "hide": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Application error rate (errors/min)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-bigquery-datasource", "uid": "BigQuery-Platform" },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ts AS time, service, errors FROM `${PROJECT}.${DATASET}.v_app_errors_1m` WHERE ts BETWEEN TIMESTAMP_MILLIS(${__from}) AND TIMESTAMP_MILLIS(${__to}) ORDER BY ts",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Pod restarts by namespace (hourly)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-bigquery-datasource", "uid": "BigQuery-Platform" },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ts AS time, namespace, SUM(restarts) AS restarts FROM `${PROJECT}.${DATASET}.v_pod_restarts_1h` WHERE ts BETWEEN TIMESTAMP_MILLIS(${__from}) AND TIMESTAMP_MILLIS(${__to}) GROUP BY ts, namespace ORDER BY ts",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Request latency p50 / p95 / p99 (ms)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-bigquery-datasource", "uid": "BigQuery-Platform" },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ts AS time, p50_ms, p95_ms, p99_ms FROM `${PROJECT}.${DATASET}.v_lb_latency_5m` WHERE ts BETWEEN TIMESTAMP_MILLIS(${__from}) AND TIMESTAMP_MILLIS(${__to}) ORDER BY ts",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Container CPU & Memory (avg)",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-bigquery-datasource", "uid": "BigQuery-Platform" },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ts AS time, container, avg_cpu_cores, avg_mem_bytes/(1024*1024) AS avg_mem_mb FROM `${PROJECT}.${DATASET}.v_container_resources_5m` WHERE ts BETWEEN TIMESTAMP_MILLIS(${__from}) AND TIMESTAMP_MILLIS(${__to}) ORDER BY ts",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    }
+  ]
+}

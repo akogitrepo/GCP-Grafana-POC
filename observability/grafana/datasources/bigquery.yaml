@@ -1,0 +1,16 @@
+# Grafana provisioned datasource — paste into a Cloud-hosted Grafana instance
+# or commit alongside the Grafana repo if you self-host.
+apiVersion: 1
+datasources:
+  - name: BigQuery-Platform
+    type: grafana-bigquery-datasource
+    access: proxy
+    isDefault: true
+    jsonData:
+      authenticationType: jwt
+      defaultProject: REPLACE_WITH_PROJECT_ID
+      processingLocation: US
+      tokenUri: https://oauth2.googleapis.com/token
+    secureJsonData:
+      privateKey: ${BQ_SA_KEY_JSON}        # Provide via Grafana secret store
+      clientEmail: ${BQ_SA_EMAIL}
