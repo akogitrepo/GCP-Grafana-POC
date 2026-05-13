@@ -1,0 +1,29 @@
+# PodMonitoring resources for Google Managed Prometheus.
+# The cluster has managedPrometheus.enabled=true (set in Terraform).
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: web-app-a
+  namespace: web-app-a
+spec:
+  selector:
+    matchLabels:
+      app: web-app-a
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: web-app-b
+  namespace: web-app-b
+spec:
+  selector:
+    matchLabels:
+      app: web-app-b
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s

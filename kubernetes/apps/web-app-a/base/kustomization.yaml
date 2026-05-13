@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: web-app-a
+resources:
+  - serviceaccount.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - backendconfig.yaml
+  - networkpolicy.yaml
+commonLabels:
+  app.kubernetes.io/name: web-app-a
+  app.kubernetes.io/part-of: platform

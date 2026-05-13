@@ -1,0 +1,34 @@
+# Global external HTTPS load balancer fronted by MCI.
+# - SSL terminated at the edge using a Google-managed certificate (Terraform).
+# - Cloud Armor policy attached via BackendConfig in each app namespace.
+# - Path-based routing: /a/* -> web-app-a, /b/* -> web-app-b, / -> web-app-a.
+apiVersion: networking.gke.io/v1
+kind: MultiClusterIngress
+metadata:
+  name: platform-edge
+  namespace: web-app-a   # MCI is namespaced; default routes live here.
+  annotations:
+    networking.gke.io/static-ip: "platform-edge-ip"
+    networking.gke.io/pre-shared-certs: "platform-edge-cert"
+spec:
+  template:
+    spec:
+      backend:
+        serviceName: web-app-a
+        servicePort: 80
+      rules:
+        - host: www.yourapp.com
+          http:
+            paths:
+              - path: /a/*
+                backend:
+                  serviceName: web-app-a
+                  servicePort: 80
+              - path: /b/*
+                backend:
+                  serviceName: web-app-b
+                  servicePort: 80
+              - path: /*
+                backend:
+                  serviceName: web-app-a
+                  servicePort: 80

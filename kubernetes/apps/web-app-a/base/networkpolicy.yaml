@@ -1,0 +1,66 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-app-a-default-deny
+  namespace: web-app-a
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-app-a-allow-lb-ingress
+  namespace: web-app-a
+spec:
+  podSelector:
+    matchLabels:
+      app: web-app-a
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 35.191.0.0/16   # GCP LB health checks
+        - ipBlock:
+            cidr: 130.211.0.0/22
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector: {}   # in-cluster traffic from any namespace
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-app-a-allow-egress
+  namespace: web-app-a
+spec:
+  podSelector:
+    matchLabels:
+      app: web-app-a
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 443

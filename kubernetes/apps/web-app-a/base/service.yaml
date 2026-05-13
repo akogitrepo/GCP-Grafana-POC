@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-a
+  namespace: web-app-a
+  labels:
+    app: web-app-a
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'                # Container-native LB via NEGs
+    cloud.google.com/backend-config: '{"default": "web-app-a-backendconfig"}'
+spec:
+  type: ClusterIP
+  selector:
+    app: web-app-a
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

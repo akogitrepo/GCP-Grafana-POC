@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: web-app-a
+resources:
+  - ../../base
+images:
+  - name: REGION-docker.pkg.dev/PROJECT_ID/platform-images/web-app-a
+    newName: us-docker.pkg.dev/myorg-platform-prod/platform-images/web-app-a
+    newTag: v1.0.0
+patches:
+  - target:
+      kind: ConfigMap
+      name: web-app-a-config
+    patch: |-
+      - op: replace
+        path: /data/REGION
+        value: us-east1
+  - target:
+      kind: ServiceAccount
+      name: web-app-a
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/iam.gke.io~1gcp-service-account
+        value: web-app-a-sa@myorg-platform-prod.iam.gserviceaccount.com

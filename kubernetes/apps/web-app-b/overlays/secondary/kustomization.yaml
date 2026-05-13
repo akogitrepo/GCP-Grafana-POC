@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: web-app-b
+resources:
+  - ../../base
+images:
+  - name: REGION-docker.pkg.dev/PROJECT_ID/platform-images/web-app-b
+    newName: us-docker.pkg.dev/myorg-platform-prod/platform-images/web-app-b
+    newTag: v1.0.0
+patches:
+  - target: { kind: ConfigMap, name: web-app-b-config }
+    patch: |-
+      - op: replace
+        path: /data/REGION
+        value: us-east1
+      - op: replace
+        path: /data/REDIS_HOST
+        value: 10.50.5.3
+  - target: { kind: ServiceAccount, name: web-app-b }
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/iam.gke.io~1gcp-service-account
+        value: web-app-b-sa@myorg-platform-prod.iam.gserviceaccount.com

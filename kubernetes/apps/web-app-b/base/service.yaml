@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-b
+  namespace: web-app-b
+  labels:
+    app: web-app-b
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/backend-config: '{"default": "web-app-b-backendconfig"}'
+spec:
+  type: ClusterIP
+  selector:
+    app: web-app-b
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

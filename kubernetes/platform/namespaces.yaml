@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web-app-a
+  labels:
+    istio-injection: enabled
+    app.kubernetes.io/part-of: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web-app-b
+  labels:
+    istio-injection: enabled
+    app.kubernetes.io/part-of: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-observability
+  labels:
+    app.kubernetes.io/part-of: platform
