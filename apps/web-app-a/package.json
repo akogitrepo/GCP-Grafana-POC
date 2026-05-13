@@ -1,0 +1,17 @@
+{
+  "name": "web-app-a",
+  "version": "1.0.0",
+  "description": "Stateless web service A — fronts customer requests behind GLB/MCI.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pino": "^9.4.0",
+    "pino-http": "^10.3.0",
+    "prom-client": "^15.1.3"
+  }
+}
