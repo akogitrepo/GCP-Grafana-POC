@@ -1,0 +1,81 @@
+name: build-and-deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "kubernetes/apps/**"
+      - ".github/workflows/build-and-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "Which app to deploy"
+        required: true
+        type: choice
+        options: [web-app-a, web-app-b]
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REPO: us-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/platform-images
+  WIF_PROVIDER: ${{ vars.WIF_PROVIDER }}      # projects/.../workloadIdentityPools/.../providers/...
+  WIF_SA: ${{ vars.WIF_DEPLOYER_SA }}         # cicd-deployer@<project>.iam.gserviceaccount.com
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  matrix:
+    name: build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web-app-a, web-app-b]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-docker.pkg.dev --quiet
+
+      - name: Build image
+        working-directory: apps/${{ matrix.app }}
+        run: |
+          IMAGE=$REPO/${{ matrix.app }}:${{ github.sha }}
+          docker build -t $IMAGE -t $REPO/${{ matrix.app }}:latest .
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ env.IMAGE }}
+          severity: CRITICAL,HIGH
+          exit-code: '0'              # surface but don't fail (tighten later)
+
+      - name: Push image
+        run: docker push --all-tags $REPO/${{ matrix.app }}
+
+      - name: Deploy to primary cluster
+        run: |
+          gcloud container clusters get-credentials gke-primary --region us-central1
+          cd kubernetes/apps/${{ matrix.app }}/overlays/primary
+          kubectl kustomize . | sed "s|:v1.0.0|:${{ github.sha }}|g" | kubectl apply -f -
+
+      - name: Deploy to secondary cluster
+        run: |
+          gcloud container clusters get-credentials gke-secondary --region us-east1
+          cd kubernetes/apps/${{ matrix.app }}/overlays/secondary
+          kubectl kustomize . | sed "s|:v1.0.0|:${{ github.sha }}|g" | kubectl apply -f -
+
+      - name: Wait for rollout
+        run: |
+          for ctx in gke_${{ vars.GCP_PROJECT_ID }}_us-central1_gke-primary gke_${{ vars.GCP_PROJECT_ID }}_us-east1_gke-secondary; do
+            kubectl --context $ctx -n ${{ matrix.app }} rollout status deploy/${{ matrix.app }} --timeout=5m
+          done

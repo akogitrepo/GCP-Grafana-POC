@@ -1,0 +1,84 @@
+# Cloud Build pipeline for either app. Triggered via push to main on
+# Cloud Source Repositories or via Cloud Build connection to GitHub.
+#
+# Substitutions:
+#   _APP         web-app-a | web-app-b
+#   _REGION      LB / cluster region
+#   _PRIMARY     primary cluster name
+#   _SECONDARY   secondary cluster name
+#   _LOCATION_P  primary cluster location
+#   _LOCATION_S  secondary cluster location
+#   _REPO        Artifact Registry repo (us-docker.pkg.dev/<proj>/platform-images)
+
+steps:
+  - id: lint
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        cd apps/${_APP}
+        docker run --rm -v "$$PWD:/app" -w /app node:20-alpine sh -c "npm install --no-audit --no-fund && npm test --if-present"
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=${_REPO}/${_APP}:${SHORT_SHA}
+      - --tag=${_REPO}/${_APP}:latest
+      - apps/${_APP}
+
+  - id: scan
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud artifacts docker images scan \
+          ${_REPO}/${_APP}:${SHORT_SHA} \
+          --remote || true   # surface vulns but don't block (until policy is enforced)
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ['push', '--all-tags', '${_REPO}/${_APP}']
+
+  - id: attest
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        # Binary Authorization attestation — only if attestor exists.
+        gcloud beta container binauthz attestations sign-and-create \
+          --artifact-url=${_REPO}/${_APP}@$$(gcloud artifacts docker images describe ${_REPO}/${_APP}:${SHORT_SHA} --format='value(image_summary.digest)') \
+          --attestor=projects/$PROJECT_ID/attestors/built-by-cloud-build \
+          --keyversion-project=$PROJECT_ID \
+          --keyversion-location=global \
+          --keyversion-keyring=binauthz \
+          --keyversion-key=signer \
+          --keyversion=1 || echo "skip — attestor not configured"
+
+  - id: deploy-primary
+    name: gcr.io/cloud-builders/gke-deploy
+    args:
+      - run
+      - --filename=kubernetes/apps/${_APP}/overlays/primary
+      - --image=${_REPO}/${_APP}:${SHORT_SHA}
+      - --location=${_LOCATION_P}
+      - --cluster=${_PRIMARY}
+
+  - id: deploy-secondary
+    name: gcr.io/cloud-builders/gke-deploy
+    args:
+      - run
+      - --filename=kubernetes/apps/${_APP}/overlays/secondary
+      - --image=${_REPO}/${_APP}:${SHORT_SHA}
+      - --location=${_LOCATION_S}
+      - --cluster=${_SECONDARY}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+timeout: 1800s
