@@ -1,0 +1,33 @@
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+plan.out
+plan.txt
+crash.log
+override.tf
+override.tf.json
+*.auto.tfvars
+*.tfvars            # keep envs/*/terraform.tfvars out of git
+!*.tfvars.example
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Docker / IDE
+.vscode/
+.idea/
+.DS_Store
+**/.DS_Store
+
+# Local session debug
+claude-chats-debug.log
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
