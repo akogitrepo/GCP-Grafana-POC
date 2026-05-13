@@ -1,0 +1,25 @@
+project_id      = "myorg-platform-prod"
+project_name    = "platform-prod"
+folder_id       = "folders/123456789012"
+billing_account = "ABCDEF-012345-6789AB"
+
+primary_region   = "us-central1"
+secondary_region = "us-east1"
+
+hostnames    = ["www.yourapp.com"]
+alert_emails = ["sre-oncall@example.com"]
+
+personas = {
+  dev = {
+    member = "group:platform-dev@example.com"
+    roles  = ["roles/container.developer", "roles/logging.viewer"]
+  }
+  sre = {
+    member = "group:platform-sre@example.com"
+    roles  = ["roles/container.admin", "roles/monitoring.editor", "roles/logging.admin"]
+  }
+  ops = {
+    member = "group:platform-ops@example.com"
+    roles  = ["roles/viewer"]
+  }
+}

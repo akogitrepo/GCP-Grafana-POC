@@ -1,0 +1,7 @@
+project_id      = "myorg-platform-dev"
+project_name    = "platform-dev"
+folder_id       = "folders/123456789012"
+billing_account = "ABCDEF-012345-6789AB"
+
+hostnames    = ["dev.yourapp.com"]
+alert_emails = ["sre-oncall@example.com"]
