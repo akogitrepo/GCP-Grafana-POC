@@ -1,0 +1,229 @@
+################################################################################
+# deploy-dev.yml
+# Triggered on every push to the `develop` branch that touches app code or
+# k8s manifests. Builds images, scans them, then deploys to dev GKE clusters.
+# No manual approval required — dev is meant for fast iteration.
+#
+# Required GitHub Actions Variables (Settings → Variables, Environment: development):
+#   GCP_PROJECT_ID      – GCP project for dev
+#   WIF_PROVIDER        – Workload Identity pool provider resource name
+#   WIF_DEPLOYER_SA     – cicd-deployer service-account email
+#   GKE_PRIMARY_REGION  – e.g. us-central1
+#   GKE_SECONDARY_REGION– e.g. us-east1
+#   GKE_PRIMARY_NAME    – e.g. gke-primary
+#   GKE_SECONDARY_NAME  – e.g. gke-secondary
+################################################################################
+
+name: deploy-dev
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "apps/**"
+      - "kubernetes/apps/**"
+      - ".github/workflows/deploy-dev.yml"
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "Specific app to deploy (leave blank for all)"
+        required: false
+        type: choice
+        options: ["", web-app-a, web-app-b]
+
+env:
+  REGISTRY: us-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/platform-images
+  ENV_NAME: dev
+
+permissions:
+  contents: write   # write needed to commit image-tag updates back to repo
+  id-token: write   # required for Workload Identity Federation
+
+jobs:
+  # ─── 1. Run unit tests before touching any cloud resource ──────────────────
+  test:
+    name: test / ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web-app-a, web-app-b]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/${{ matrix.app }}/package.json
+
+      - name: Install dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: npm ci
+
+      - name: Run tests
+        working-directory: apps/${{ matrix.app }}
+        run: npm test
+
+  # ─── 2. Build, scan, and push Docker images to Artifact Registry ───────────
+  build-push:
+    name: build & push / ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    needs: test
+    environment: development
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web-app-a, web-app-b]
+    outputs:
+      # Expose image digest so downstream jobs pin exact images
+      image-web-app-a: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker → Artifact Registry
+        run: gcloud auth configure-docker us-docker.pkg.dev --quiet
+
+      - name: Set image tags
+        id: meta
+        run: |
+          IMAGE=${{ env.REGISTRY }}/${{ matrix.app }}
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "tag_sha=${IMAGE}:${{ github.sha }}"  >> "$GITHUB_ENV"
+          echo "tag_dev=${IMAGE}:dev-latest"          >> "$GITHUB_ENV"
+
+      - name: Build image
+        working-directory: apps/${{ matrix.app }}
+        run: |
+          docker build \
+            --label "git.sha=${{ github.sha }}" \
+            --label "git.branch=develop" \
+            --label "environment=dev" \
+            -t "${{ env.tag_sha }}" \
+            -t "${{ env.tag_dev }}" \
+            .
+
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ env.tag_sha }}
+          severity: CRITICAL,HIGH
+          exit-code: "0"   # warn only in dev — tighten to '1' when ready
+          format: table
+
+      - name: Push image
+        run: |
+          docker push "${{ env.tag_sha }}"
+          docker push "${{ env.tag_dev }}"
+
+      - name: Commit image tag update to repo
+        run: |
+          git config user.name  "Abhay"
+          git config user.email "abojha@teksystems.com"
+
+          # Record the deployed image SHA in the kustomization
+          sed -i "s|newTag:.*|newTag: ${{ github.sha }}|g" \
+            kubernetes/apps/${{ matrix.app }}/overlays/primary/kustomization.yaml \
+            kubernetes/apps/${{ matrix.app }}/overlays/secondary/kustomization.yaml \
+            2>/dev/null || true
+
+          git diff --quiet || git commit -am \
+            "Checked in By Abhay and updated the work flow
+
+            app: ${{ matrix.app }}
+            image: ${{ env.tag_sha }}
+            workflow: ${{ github.workflow }} #${{ github.run_number }}
+            environment: dev"
+
+          git push origin develop || true  # non-blocking if nothing changed
+
+  # ─── 3. Deploy to dev GKE clusters (primary then secondary) ────────────────
+  deploy-dev:
+    name: deploy-dev / ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    needs: build-push
+    environment: development
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web-app-a, web-app-b]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install kubectl + kustomize
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.30.0"
+
+      - name: Deploy → primary cluster
+        run: |
+          gcloud container clusters get-credentials \
+            ${{ vars.GKE_PRIMARY_NAME }} \
+            --region ${{ vars.GKE_PRIMARY_REGION }} \
+            --project ${{ vars.GCP_PROJECT_ID }}
+
+          kubectl kustomize kubernetes/apps/${{ matrix.app }}/overlays/primary \
+            | sed "s|:v1.0.0|:${{ github.sha }}|g" \
+            | kubectl apply -f -
+
+          kubectl -n ${{ matrix.app }} rollout status \
+            deployment/${{ matrix.app }} --timeout=3m
+
+      - name: Deploy → secondary cluster
+        run: |
+          gcloud container clusters get-credentials \
+            ${{ vars.GKE_SECONDARY_NAME }} \
+            --region ${{ vars.GKE_SECONDARY_REGION }} \
+            --project ${{ vars.GCP_PROJECT_ID }}
+
+          kubectl kustomize kubernetes/apps/${{ matrix.app }}/overlays/secondary \
+            | sed "s|:v1.0.0|:${{ github.sha }}|g" \
+            | kubectl apply -f -
+
+          kubectl -n ${{ matrix.app }} rollout status \
+            deployment/${{ matrix.app }} --timeout=3m
+
+      - name: Smoke test (HTTP health check)
+        run: |
+          gcloud container clusters get-credentials \
+            ${{ vars.GKE_PRIMARY_NAME }} \
+            --region ${{ vars.GKE_PRIMARY_REGION }} \
+            --project ${{ vars.GCP_PROJECT_ID }}
+
+          # Port-forward and hit /health — replace with your LB URL if available
+          kubectl -n ${{ matrix.app }} port-forward \
+            svc/${{ matrix.app }} 8080:80 &
+          sleep 3
+          curl --retry 5 --retry-delay 2 --fail http://localhost:8080/health
+          kill %1 || true
+
+  # ─── 4. Summary notification ────────────────────────────────────────────────
+  notify:
+    name: notify
+    runs-on: ubuntu-latest
+    needs: [deploy-dev]
+    if: always()
+    steps:
+      - name: Post deployment status
+        run: |
+          STATUS="${{ needs.deploy-dev.result }}"
+          echo "Dev deployment result: $STATUS"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          # Extend here with Slack/PagerDuty/Teams webhook if needed
